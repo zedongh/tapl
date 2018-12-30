@@ -1,0 +1,18 @@
+language: c
+
+sudo: false
+
+cache:
+  directories:
+  - $HOME/.stack
+
+before_install:
+  # Download and unpack the stack executable
+  - mkdir -p ~/.local/bin
+  - export PATH=$HOME/.local/bin:$PATH
+  - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+  - chmod a+x ~/.local/bin/stack
+
+script:
+  - stack --no-terminal --skip-ghc-check test
+  - stack --no-terminal build
