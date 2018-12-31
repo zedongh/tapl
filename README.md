@@ -5,8 +5,10 @@
 *Tasklist*
 
 ## I. Untyped Systems
-    1. Untyped Arithmetic Expressions
-    2. Untyped Lambda-Calculus
+
+- [x] Untyped Arithmetic Expressions
+- [x] Untyped Lambda-Calculus
+
 ## II. Simple Types 
 ## III. Subtyping
 ## IV. Recurisve Types
