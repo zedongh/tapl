@@ -25,3 +25,9 @@ main = hspec $ do
         it "λx.λy.λz.((x z) (y z)) " $ do 
             parseTerm "lambda x.lambda y.lambda z.((x z) (y z)) " `shouldBe` Right (Abs (Abs (Abs (App (App (Var 2) (Var 0)) (App (Var 1) (Var 0))))))
 
+    describe "shift" $ do 
+        it "shift 2 on λ.λ.(1 (0 2)) => λ.λ.(1 (0 4))" $ do 
+            shift 2 (Abs (Abs (App (Var 1) (App (Var 0) (Var 2))))) `shouldBe` (Abs (Abs (App (Var 1) (App (Var 0) (Var 4)))))
+            
+        it "shift 2 on λ.λ.(0 (1 (λ.(0 (1 2))))) => λ.λ.(0 (1 (λ.(0 (1 2)))))" $ do 
+            shift 2 (Abs (Abs (App (Var 0) (App (Var 1) (Abs (App (Var 0) (App (Var 1) (Var 2)))))))) `shouldBe` (Abs (Abs (App (Var 0) (App (Var 1) (Abs (App (Var 0) (App (Var 1) (Var 2))))))))

@@ -1,4 +1,4 @@
-module Untyped.Lambda (Term(..), term, parseTerm) where 
+module Untyped.Lambda (Term(..), shift, term, parseTerm) where 
     
 
 import Control.Monad.Combinators.Expr
@@ -101,3 +101,28 @@ term = between space eof _term
 
 
 parseTerm s = evalState (runParserT term "test" s) mkContext
+
+
+-- Subsitution:
+-- | [x -> s] x = s
+-- | [x -> s] y = y           if x != y
+-- | [x -> s] λy.t = λy.[x -> s]t
+-- | [x -> s] (t1 t2) = ([x -> s]t1 [x -> s] t2)
+-- De Index
+-- out contxt  [s: (z λw.w), ?, ?, z]
+-- | [1 -> s] λ.2  i.e. [x -> s] λy.x
+-- shift bound var
+
+-- shift(c, d) (k) = k if k < c else k + d 
+--             (λ.t) = λ.shift(c+1,d)(t)
+--             ((t1 t2))  = (shift(c, d)(t1) (shift(c, d)(t2))
+
+shift :: Int -> Term -> Term
+shift = _shift 0
+
+_shift :: Int -> Int -> Term -> Term
+_shift c d term = 
+    case term of 
+        Var k -> Var $ if k < c then k else k + d
+        Abs t -> Abs $ _shift (c+1) d t
+        App t1 t2 -> App (_shift c d t1) (_shift c d t2)
