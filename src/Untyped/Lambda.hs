@@ -1,4 +1,4 @@
-module Untyped.Lambda (Term(..), shift, term, parseTerm) where 
+module Untyped.Lambda (Term(..), shift, term, parseTerm, termSubstTop, eval, mkContext) where 
     
 
 import Control.Monad.Combinators.Expr
@@ -126,3 +126,26 @@ _shift c d term =
         Var k -> Var $ if k < c then k else k + d
         Abs t -> Abs $ _shift (c+1) d t
         App t1 t2 -> App (_shift c d t1) (_shift c d t2)
+
+-- [i -> s]t
+subst :: Int -> Term -> Term -> Term
+subst i s t = _subst 0 t
+    where _subst c t = 
+            case t of
+                Var k -> if k == i + c then shift c s else Var k
+                Abs t1 -> Abs $ _subst (c+1) t1
+                App t1 t2 -> App (_subst c t1) (_subst c t2)
+
+-- λx.x λx.x => λx.x
+-- λ.0  λ.0  => λ.0   
+termSubstTop :: Term -> Term -> Term
+termSubstTop v t = shift (-1) (subst 0 (shift 1 v) t) 
+
+
+eval :: Context -> Term -> Term
+eval ctx term = 
+    case term of 
+        App (Abs t1) v@(Abs t2) -> termSubstTop v t1
+        App v@(Abs t1) t2 -> eval ctx (App v (eval ctx t2))
+        App t1 t2 -> eval ctx (App (eval ctx t1) t2)
+        _ -> term

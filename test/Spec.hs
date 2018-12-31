@@ -31,3 +31,13 @@ main = hspec $ do
             
         it "shift 2 on λ.λ.(0 (1 (λ.(0 (1 2))))) => λ.λ.(0 (1 (λ.(0 (1 2)))))" $ do 
             shift 2 (Abs (Abs (App (Var 0) (App (Var 1) (Abs (App (Var 0) (App (Var 1) (Var 2)))))))) `shouldBe` (Abs (Abs (App (Var 0) (App (Var 1) (Abs (App (Var 0) (App (Var 1) (Var 2))))))))
+
+    describe "apply" $ do 
+        it "(λx.x λx.x) => λx.x" $ do 
+            eval mkContext (App (Abs (Var 0)) (Abs (Var 0))) `shouldBe` (Abs (Var 0))
+
+        it "((λx.λy.x λx.x) λx.x)" $ do
+            eval mkContext (App (App (Abs (Abs (Var 1))) (Abs (Var 0))) (Abs (Var 0))) `shouldBe` (Abs (Var 0))
+    
+        it "(λx.λy.x λx.x) => λy.λx.x" $ do 
+            eval mkContext (App (Abs (Abs (Var 1))) (Abs (Var 0))) `shouldBe` (Abs (Abs (Var 0)))
