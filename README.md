@@ -10,6 +10,9 @@
 - [x] Untyped Lambda-Calculus
 
 ## II. Simple Types 
+
+- [ ] Simply Typed Lambda-Calculus
+
 ## III. Subtyping
 ## IV. Recurisve Types
 ## V. Polymorphism
