@@ -116,6 +116,15 @@ abs = do
     put ctx                -- restore context
     return $ Abs var binding t 
 
+_if = do 
+    reserve "if"
+    t1 <- _term
+    reserve "then"
+    t2 <- _term
+    reserve "else"
+    t3 <- _term
+    return $ TIf t1 t2 t3
+
 app :: Parser Term 
 app = paren (App <$> _term <*> _term)
 
@@ -125,7 +134,7 @@ bool =  TTrue <$ reserve "true"
     <|> TFalse <$ reserve "false"
 
 _term :: Parser Term 
-_term = bool <|> try var <|> abs <|> app
+_term = bool <|>_if <|> try var <|> abs <|> app
 
 term = between space eof _term
 
