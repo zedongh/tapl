@@ -36,12 +36,14 @@ data Binding =
     deriving (Show, Eq)
  
 data Ty = 
-      TyBool        -- boolean type 
-    | TyArr Ty Ty   -- function type
+      TyBool        -- ^ Boolean type 
+    | TyUnit        -- ^ Unit type
+    | TyArr Ty Ty   -- ^ Function type
     deriving (Eq)
 
 instance Show Ty where 
     show TyBool = "Bool"
+    show TyUnit = "Unit"
     show (TyArr t1 t2) = "(" ++ show t1 ++ " -> " ++ show t2 ++ ")" 
 
 mkContext :: Context
@@ -70,6 +72,7 @@ indexOf str ((x, _):xs) = if x == str then Just 0 else (1+) <$> indexOf str xs
 data Term =
       TTrue
     | TFalse
+    | TUnit                      -- ^ unit
     | TIf Term Term Term
     | Var Int                    -- differ with books
     | Abs String Ty Term
@@ -101,6 +104,7 @@ parseBinding :: Parser Ty
 parseBinding = (foldl1 TyArr) <$> (sepBy1 _type (symbol "->"))
 
 _type = TyBool <$ reserve "Bool"
+    <|> TyUnit <$ reserve "Unit"
     <|> paren parseBinding 
 
 abs :: Parser Term
@@ -129,12 +133,13 @@ app :: Parser Term
 app = paren (App <$> _term <*> _term)
 
 
-bool :: Parser Term 
-bool =  TTrue <$ reserve "true" 
+keywords :: Parser Term 
+keywords =  TTrue <$ reserve "true" 
     <|> TFalse <$ reserve "false"
+    <|> TUnit <$ reserve "unit"
 
 _term :: Parser Term 
-_term = bool <|>_if <|> try var <|> abs <|> app
+_term = keywords <|>_if <|> try var <|> abs <|> app
 
 term = between space eof _term
 
@@ -179,6 +184,7 @@ typeOf ctx t =
     case t of 
         TTrue -> TyBool
         TFalse -> TyBool 
+        TUnit  -> TyUnit
         TIf t1 t2 t3 -> if typeOf ctx t1 == TyBool 
                         then let ty2 = typeOf ctx t2 
                                  ty3 = typeOf ctx t3 

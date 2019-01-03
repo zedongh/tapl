@@ -15,14 +15,23 @@ spec =
             it "false" $ do
                 isRight $ parseTerm "false"
 
+            it "unit" $ do 
+                isRight $ parseTerm "unit"
+
             it "if-then-else" $ do
                 isRight $ parseTerm "if true then \\x:Bool.x else \\x:Bool.\\y:Bool.x"
 
             it "\\x: Bool.x" $ do
                 isRight $ parseTerm "\\x: Bool.x"
 
+            it "\\x: Unit.x" $ do 
+                isRight $ parseTerm "\\x: Unit.x"
+
             it "\\x: Bool.\\x: Bool.x" $ do
                 isRight $ parseTerm "\\x: Bool.\\x: Bool.x"
+
+            it "\\x: Bool. \\y:Unit.y" $ do
+                isRight $ parseTerm "\\x: Bool.\\x: Unit.x"
 
         describe "type infer" $ do
             it "true: Bool" $ do 
@@ -31,6 +40,9 @@ spec =
             it "false: Bool" $ do 
                 typeOf [] (fromRight (error "parse `false` error") $ parseTerm "false") `shouldBe` TyBool 
             
+            it "unit: Unit" $ do 
+                typeOf [] (fromRight (error "parse `unit` error") $ parseTerm "unit") `shouldBe` TyUnit
+
             it "if true then true else false : Bool" $ do 
                 typeOf [] (fromRight (error "parse `if true then true else false` error") $ parseTerm "if true then true else false") `shouldBe` TyBool 
             
@@ -40,4 +52,8 @@ spec =
             it "if true then \\x: Bool.x else \\x: Bool.x : Bool -> Bool" $ do 
                 typeOf [] (fromRight (error "parse `if true then \\x: Bool.x else \\x: Bool.x` error") $ parseTerm "if true then \\x: Bool.x else \\x: Bool.x") `shouldBe` TyArr TyBool TyBool
             
-            
+            it "\\x: Unit. true" $ do 
+                typeOf [] (fromRight (error "parse `\\x: Unit. true` error") $ parseTerm "\\x: Unit. true") `shouldBe` TyArr TyUnit TyBool
+
+            it "\\x: Unit -> Unit. x" $ do 
+                typeOf [] (fromRight (error "parse `\\x: Unit -> Unit. x`") $ parseTerm "\\x: Unit -> Unit. x") `shouldBe` TyArr (TyArr TyUnit TyUnit) (TyArr TyUnit TyUnit)
