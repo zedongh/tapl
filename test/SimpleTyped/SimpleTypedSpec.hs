@@ -34,6 +34,9 @@ spec =
             it "if true then true else false : Bool" $ do 
                 typeOf [] (fromRight (error "parse `if true then true else false` error") $ parseTerm "if true then true else false") `shouldBe` TyBool 
             
+            it "\\x: Bool -> Bool.x" $ do 
+                typeOf [] (fromRight (error "parse `\\x: Bool -> Bool.x`") $ parseTerm "\\x: Bool -> Bool.x") `shouldBe` TyArr (TyArr TyBool TyBool) (TyArr TyBool TyBool)
+
             it "if true then \\x: Bool.x else \\x: Bool.x : Bool -> Bool" $ do 
                 typeOf [] (fromRight (error "parse `if true then \\x: Bool.x else \\x: Bool.x` error") $ parseTerm "if true then \\x: Bool.x else \\x: Bool.x") `shouldBe` TyArr TyBool TyBool
             
