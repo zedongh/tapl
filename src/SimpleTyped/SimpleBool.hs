@@ -25,6 +25,15 @@ reserve str = (lexeme . try) (string' str *> notFollowedBy alphaNumChar)
 symbol :: String -> Parser String
 symbol = L.symbol space
 
+nat :: Parser Integer
+nat = lexeme L.decimal
+
+float :: Parser Double
+float = lexeme L.float
+
+str :: Parser String 
+str = lexeme $ char '"' >> manyTill L.charLiteral (char '"')
+
 paren = between (symbol "(") (symbol ")")
 
 -- Context
@@ -38,12 +47,18 @@ data Binding =
 data Ty = 
       TyBool        -- ^ Boolean type 
     | TyUnit        -- ^ Unit type
+    | TyNat
+    | TyFloat
+    | TyString
     | TyArr Ty Ty   -- ^ Function type
     deriving (Eq)
 
 instance Show Ty where 
-    show TyBool = "Bool"
-    show TyUnit = "Unit"
+    show TyBool   = "Bool"
+    show TyUnit   = "Unit"
+    show TyNat    = "Nat"
+    show TyFloat  = "Float"
+    show TyString = "String"
     show (TyArr t1 t2) = "(" ++ show t1 ++ " -> " ++ show t2 ++ ")" 
 
 mkContext :: Context
@@ -73,6 +88,9 @@ data Term =
       TTrue
     | TFalse
     | TUnit                      -- ^ unit
+    | TNat Integer               -- ^ int
+    | TFloat Double              -- ^ float
+    | TString String             -- ^ string
     | TIf Term Term Term
     | Var Int                    -- differ with books
     | Abs String Ty Term
@@ -82,12 +100,16 @@ data Term =
 instance Show Term where 
     show term = 
         case term of 
-            TTrue -> "True"
-            TFalse -> "False"
+            TTrue        -> "True"
+            TFalse       -> "False"
+            TUnit        -> "unit"
+            TNat i       -> show i ++ "L"
+            TFloat d     -> show d ++ "D"
+            TString s    -> "\"" ++ s ++ "\""
             TIf t1 t2 t3 -> "if " ++ show t1 ++ " then " ++ show t2 ++ " else " ++ show t3 
-            Var i  -> show i 
-            Abs s ty t -> "λ" ++ s ++ ": " ++ show ty ++ "." ++ show t 
-            App t1 t2 -> "(" ++ show t1 ++ " " ++ show t2 ++ ")"
+            Var i        -> show i 
+            Abs s ty t   -> "λ" ++ s ++ ": " ++ show ty ++ "." ++ show t 
+            App t1 t2    -> "(" ++ show t1 ++ " " ++ show t2 ++ ")"
 
 identifier :: Parser String 
 identifier = (lexeme . try) ((:) <$> letterChar <*> many alphaNumChar)
@@ -103,8 +125,11 @@ var = do
 parseBinding :: Parser Ty
 parseBinding = (foldl1 TyArr) <$> (sepBy1 _type (symbol "->"))
 
-_type = TyBool <$ reserve "Bool"
-    <|> TyUnit <$ reserve "Unit"
+_type = TyBool   <$ reserve "Bool"
+    <|> TyUnit   <$ reserve "Unit"
+    <|> TyNat    <$ reserve "Nat"
+    <|> TyFloat  <$ reserve "Float"
+    <|> TyString <$ reserve "String"
     <|> paren parseBinding 
 
 abs :: Parser Term
@@ -139,7 +164,14 @@ keywords =  TTrue <$ reserve "true"
     <|> TUnit <$ reserve "unit"
 
 _term :: Parser Term 
-_term = keywords <|>_if <|> try var <|> abs <|> app
+_term = keywords 
+    <|> TFloat <$> try float
+    <|> TNat   <$> nat
+    <|> TString <$> str
+    <|> _if 
+    <|> try var 
+    <|> abs 
+    <|> app
 
 term = between space eof _term
 
@@ -185,6 +217,9 @@ typeOf ctx t =
         TTrue -> TyBool
         TFalse -> TyBool 
         TUnit  -> TyUnit
+        TNat n -> TyNat
+        TFloat d -> TyFloat
+        TString s -> TyString
         TIf t1 t2 t3 -> if typeOf ctx t1 == TyBool 
                         then let ty2 = typeOf ctx t2 
                                  ty3 = typeOf ctx t3 

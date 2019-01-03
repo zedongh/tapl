@@ -9,6 +9,15 @@ spec =
   describe "SimpleTyped" $ do
     describe "SimpleBool" $ do
         describe "parser" $ do
+            it "nat" $ do 
+                isRight $ parseTerm "1"
+
+            it "float" $ do 
+                isRight $ parseTerm "1.2"
+
+            it "string" $ do 
+                isRight $ parseTerm "\"12\""
+
             it "true" $ do
                 isRight $ parseTerm "true"
 
@@ -57,3 +66,9 @@ spec =
 
             it "\\x: Unit -> Unit. x" $ do 
                 typeOf [] (fromRight (error "parse `\\x: Unit -> Unit. x`") $ parseTerm "\\x: Unit -> Unit. x") `shouldBe` TyArr (TyArr TyUnit TyUnit) (TyArr TyUnit TyUnit)
+
+            it "\\x: String.\\y: Nat. unit" $ do 
+                typeOf [] (fromRight (error "parse `\\x: String.\\y: Nat. unit`") $ parseTerm "\\x: String.\\y: Nat. unit") `shouldBe` TyArr TyString (TyArr TyNat TyUnit)
+
+            it "\\x: Nat. 1.2" $ do 
+                typeOf [] (fromRight (error "parse `\\x: Nat. 1.2`") $ parseTerm "\\x: Nat. 1.2") `shouldBe` TyArr TyNat TyFloat
